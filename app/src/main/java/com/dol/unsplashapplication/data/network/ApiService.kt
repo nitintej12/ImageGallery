@@ -9,6 +9,6 @@ import retrofit2.http.Query
 interface ApiService {
     @GET("photos")
     suspend fun getPhotos(
-        @Query("client") id: String = Constants.UNSPLASH_ACCESS_KEY
+//        @Query("client") id: String = Constants.UNSPLASH_ACCESS_KEY
     ): Response<List<ResultItem>>
 }

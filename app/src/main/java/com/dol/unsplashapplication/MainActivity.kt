@@ -19,8 +19,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Face
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +37,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -91,21 +94,18 @@ fun PhotoGallery(name: String, modifier: Modifier = Modifier, viewModel: MainVie
             items = photoList,
             key = { it.id + Random.nextInt().toString() },
         ) { photo ->
-            Text(
-                modifier = Modifier
-                    .height(75.dp),
-                text = photo.description ?: "",
-            )
+            ElevatedCard(modifier = modifier.padding(16.dp)) {
+                AsyncImage(
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.3f),
+                    model = photo.urls.regular,
+                    contentDescription = photo.alt_description ?: "",
+                    contentScale = ContentScale.FillWidth
+                )
 
-            AsyncImage(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.3f),
-                model = photo.urls.regular,
-                contentDescription = photo.alt_description ?: ""
-            )
-
-            HorizontalDivider()
+                HorizontalDivider()
+            }
         }
 
         item(

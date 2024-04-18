@@ -1,6 +1,6 @@
 package com.dol.unsplashapplication.data.repositories
 
-import com.dol.unsplashapplication.data.model.ResultItem
+import com.dol.unsplashapplication.data.model.PhotoItem
 import com.dol.unsplashapplication.utils.BaseApiResponse
 import com.dol.unsplashapplication.data.network.ApiService
 import com.dol.unsplashapplication.utils.NetworkResult
@@ -14,9 +14,9 @@ import javax.inject.Inject
 @ActivityRetainedScoped
 class ApiRepositoryImpl @Inject constructor(private val apiService: ApiService) :
     BaseApiResponse() {
-    suspend fun getPhotos(): Flow<NetworkResult<List<ResultItem>>> {
+    suspend fun getPhotos(page : Int): Flow<NetworkResult<List<PhotoItem>>> {
         return flow {
-            emit(safeApiCall { apiService.getPhotos() })
+            emit(safeApiCall { apiService.getPhotos(page) })
         }.flowOn(Dispatchers.IO)
     }
 }

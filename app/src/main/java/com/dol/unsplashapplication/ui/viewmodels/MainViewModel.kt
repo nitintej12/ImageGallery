@@ -1,31 +1,39 @@
 package com.dol.unsplashapplication.ui.viewmodels
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dol.unsplashapplication.data.model.ResultItem
+import com.dol.unsplashapplication.data.model.PhotoItem
 import com.dol.unsplashapplication.data.repositories.ApiRepositoryImpl
 import com.dol.unsplashapplication.utils.NetworkResult
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-
-data class HomeState(
-    val isLoading: Boolean = false,
-    val photosResult: List<ResultItem>? = null,
-    val isError: Boolean = false
-)
+enum class ListState {
+    IDLE,
+    LOADING,
+    PAGINATING,
+    ERROR,
+    PAGINATION_EXHAUST,
+}
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val apiRepository: ApiRepositoryImpl
 ) : ViewModel() {
 
-    private val _photos = MutableStateFlow(HomeState())
-    val photos: StateFlow<HomeState> = _photos.asStateFlow()
+
+    val newsList = mutableStateListOf<PhotoItem>()
+
+
+    private var page by mutableIntStateOf(1)
+    var canPaginate by mutableStateOf(false)
+    var listState by mutableStateOf(ListState.IDLE)
 
 
     init {
@@ -33,42 +41,39 @@ class MainViewModel @Inject constructor(
     }
 
     fun getPhotos() {
-        viewModelScope.launch {
-            _photos.emit(
-                HomeState().copy(
-                    isLoading = true
-                )
-            )
-            apiRepository.getPhotos().collect { result ->
-                when (result) {
-                    is NetworkResult.Success -> {
-                        _photos.emit(
-                            HomeState().copy(
-                                isLoading = false, photosResult = result.data, isError = false
-                            )
-                        )
-                    }
+        if (page == 1 || (page != 1 && canPaginate) && listState == ListState.IDLE) {
+            listState = if (page == 1) ListState.LOADING else ListState.PAGINATING
 
-                    is NetworkResult.Error -> {
-                        _photos.emit(
-                            HomeState().copy(
-                                isLoading = false,
-                                isError = true
-                            )
-                        )
-                    }
+            viewModelScope.launch {
+                apiRepository.getPhotos(page).collect() {
+                    if (it is NetworkResult.Success) {
+                        canPaginate = it.data?.size!! >= 10
 
-                    is NetworkResult.Loading -> {
-                        _photos.emit(
-                            HomeState().copy(
-                                isLoading = true,
-                                isError = false,
-                                photosResult = null
-                            )
-                        )
+                        if (page == 1) {
+                            newsList.clear()
+                            newsList.addAll(it.data)
+                            page++
+                        } else {
+                            newsList.addAll(it.data)
+                        }
+
+                        listState = ListState.IDLE
+
+                        if (canPaginate)
+                            page++
+                    } else {
+                        listState = if (page == 1) ListState.ERROR else ListState.PAGINATION_EXHAUST
                     }
                 }
             }
         }
+    }
+
+    override fun onCleared() {
+        page = 1
+        listState = ListState.IDLE
+        canPaginate = false
+        super.onCleared()
+
     }
 }

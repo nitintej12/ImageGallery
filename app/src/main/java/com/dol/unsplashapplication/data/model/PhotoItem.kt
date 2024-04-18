@@ -1,6 +1,6 @@
 package com.dol.unsplashapplication.data.model
 
-data class ResultItem(
+data class PhotoItem(
     val alt_description: String,
     val alternative_slugs: AlternativeSlugs,
     val asset_type: String,
